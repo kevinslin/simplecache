@@ -1,13 +1,36 @@
+"""Memoization Functions for after program terminates
+memoize
+    Decorate to memoize a function during execution of the program
+
+Methods:
+========
+cache(func, *args)
+    Put expensive calculations into permanent cache
+"""
+
 import functools
 import os
 import pickle
-from simplelog import SL as sl
 
-sl.quiet()
+from simplelog import log
 
-"""
-A really simple cache
-"""
+__all__ = ["memoized", "cache"]
+__version__ = '0.1.0'
+
+SIMPLECACHE_DIR = os.path.join(os.getcwd(), '.cache')
+#TODO.bug: this isn't being set by cache function
+CACHE_HIT = False
+
+def _initialize():
+    """ Make sure directory exists """
+    if os.path.exists(SIMPLECACHE_DIR):
+        pass
+    else:
+        os.mkdir(SIMPLECACHE_DIR)
+
+_initialize()
+#TODO: reset if user changes this value
+
 class memoized(object):
     """
     Decorator that caches function's return value when it is called.
@@ -18,15 +41,14 @@ class memoized(object):
 
     def __call__(self, *args):
         try:
-            sl.debug("fetching from cache...")
             return self.cache[args]
         except KeyError:
-            sl.debug("cache miss...")
+
             value = self.func(*args)
             self.cache[args] = value
             return value
         except TypeError:
-            sl.debug("uncachable...")
+
             #TEMP: don't handle lists as args
             return self.func(*args)
 
@@ -53,25 +75,27 @@ def cache(func, *args):
     >>> cache(binary_search, 2, 12, 1) #doctest: +SKIP
     3
     """
-    sl.debug("========\nin cache")
-    sl.debug("obj: %s" % str(func))
-    cache_index = hash(str(func.func_name) + str(list(args))) #hash is function name + values
-    if not (os.path.exists(".cache")):
-        os.mkdir(".cache")
-    sl.debug("index: %s" % str(cache_index))
-    #Check if file is in cache
-    if (os.path.exists(".cache/"+str(cache_index))):
-        sl.debug("found item in cache")
-        with open(".cache/"+str(cache_index), "rb") as fh:
+    global CACHE_HIT
+    _initialize()
+    # Hash is function name + values
+    cache_index = hash(str(func.func_name) +
+            str(list(args)))
+    cache_name = os.path.join( SIMPLECACHE_DIR,  str(cache_index) )
+
+    # If we find file, load it
+    if (os.path.exists(cache_name)):
+        log('cache hit')
+        with open(cache_name, "rb") as fh:
             r = pickle.load(fh)
-            #sl.debug("item: %s" % str(r))
+            CACHE_HIT = True
             return r
+    # Object doesn't exist, put it in cache
     else:
-        sl.debug("putting item in cache")
         r = func(*args)
-        sl.debug("function result: %s" % str(r))
-        with open(".cache/"+str(cache_index), "wb") as fh:
+        with open(cache_name, "wb") as fh:
+            log('cache miss')
             pickle.dump(r, fh, pickle.HIGHEST_PROTOCOL)
+        CACHE_HIT = False
         return r
 
 def clear_cache():
@@ -80,9 +104,9 @@ def clear_cache():
     @param:
             #TODO: keep - list of items to keep
     """
-    files = os.listdir(".cache")
+    files = os.listdir(SIMPLECACHE_DIR)
     for f in files:
-        os.remove(".cache/" + f)
+        os.remove(SIMPLECACHE_DIR + f)
 
 def cache_put(obj, key):
     """
@@ -93,9 +117,8 @@ def cache_put(obj, key):
     @return:
     name of key
     """
-    #TODO: catch error
     cache_index = key
-    with open(".cache/"+str(cache_index), "w") as fh:
+    with open(SIMPLECACHE_DIR + str(cache_index), "w") as fh:
         pickle.dump(obj, fh, pickle.HIGHEST_PROTOCOL)
     return cache_index
 
@@ -107,8 +130,8 @@ def cache_get(key):
             key - the key to fetch object by
     """
     cache_index = hash(str(key))
-    if (os.path.exists(".cache/"+str(cache_index))):
-        with open(".cache/"+str(cache_index)) as fh:
+    if (os.path.exists(SIMPLECACHE_DIR + str(cache_index))):
+        with open(SIMPLECACHE_DIR + str(cache_index)) as fh:
             return pickle.load(fh)
     else:
         return False

@@ -1,0 +1,5 @@
+This is a simple cachce.
+
+@memoized
+def fib(n):
+    ...
