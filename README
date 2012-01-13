@@ -1,4 +1,24 @@
-This is a simple cachce.
+General
+=======
+This is a simple cache to store that persists even after a program has terminated.
+The default location to store cached items is in a ".cache" folder in the current
+directory. This can be set by setting the SIMPLECACHE_DIR attribute
+
+Methods:
+========
+
+cache(func [, *args ])
+    Places an expensive function into a cache
+
+clear_cache
+    Clears the cache
+
+cache_put(obj, key)
+    Put in cache under key value
+
+cache_get(key)
+    Get a cache via a key
+
 
 @memoized
 def fib(n):

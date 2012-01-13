@@ -15,7 +15,7 @@ import pickle
 from simplelog import log
 
 __all__ = ["memoized", "cache"]
-__version__ = '0.1.0'
+__version__ = '0.0.1'
 
 SIMPLECACHE_DIR = os.path.join(os.getcwd(), '.cache')
 #TODO.bug: this isn't being set by cache function
